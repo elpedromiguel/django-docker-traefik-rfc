@@ -6,13 +6,18 @@ services:
         context: ./app
         dockerfile: docker/Dockerfile.prod
     command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; gunicorn --bind 0.0.0.0:8000 config.wsgi'
-    ports:
-        - 8008:8000
+    expose:
+        - 8000
     env_file: 
         - app/.envs/.local/.django
         - app/.envs/.local/.database
     depends_on:
         - db
+    labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.django.rule=Host(`sub.domain.com`)"
+        - "traefik.http.routers.django.tls=true"
+        - "traefik.http.routers.django.tls.certresolver=letsencrypt"
   db:
     image: postgres:13-alpine
     volumes:
@@ -21,6 +26,25 @@ services:
         - 5432
     env_file: 
         - app/.envs/.local/.database
+  traefik:  # new
+    build:
+        context: .
+        dockerfile: Dockerfile.traefik
+    ports:
+        - 80:80
+        - 443:443
+    volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        - "./traefik-public-certificates:/certificates"
+    labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.domain.com`)"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=preyes:$$apr1$$jZCL5twn$$H5HUy3SWXbjaR.WblH.Dz."
 
 volumes:
   postgres_data_prod:
+  traefik-public-certificates:

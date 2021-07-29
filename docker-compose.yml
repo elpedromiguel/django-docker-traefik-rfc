@@ -8,13 +8,16 @@ services:
     command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; python manage.py runserver 0.0.0.0:8000'
     volumes:
         - ./app:/app
-    ports:
-        - 8008:8000
+    expose:
+        - 8000
     env_file: 
         - app/.envs/.local/.django
         - app/.envs/.local/.database
     depends_on:
         - db
+    labels: 
+        - "traefik.enable=true"
+        - "traefik.http.routers.django.rule=Host(`project.localhost`)"
   db:
     image: postgres:13-alpine
     volumes:
@@ -23,6 +26,15 @@ services:
         - 5432
     env_file: 
         - app/.envs/.local/.database
+
+  traefik:
+    image: traefik:v2.2
+    ports:
+        - 8008:80
+        - 8081:8080    
+    volumes:
+        - "$PWD/traefik.dev.toml:/etc/traefik/traefik.toml"
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 volumes:
   postgres_data:

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+        context: ./app
+        dockerfile: docker/Dockerfile.prod
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; gunicorn --bind 0.0.0.0:8000 config.wsgi'
+    ports:
+        - 8008:8000
+    env_file: 
+        - app/.envs/.local/.django
+        - app/.envs/.local/.database
+    depends_on:
+        - db
+  db:
+    image: postgres:13-alpine
+    volumes:
+        - postgres_data_prod:/var/lib/postgresql/data/
+    expose:
+        - 5432
+    env_file: 
+        - app/.envs/.local/.database
+
+volumes:
+  postgres_data_prod:

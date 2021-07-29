@@ -9,13 +9,13 @@ services:
     expose:
         - 8000
     env_file: 
-        - app/.envs/.local/.django
-        - app/.envs/.local/.database
+        - app/.envs/.prod/.django
+        - app/.envs/.prod/.database
     depends_on:
         - db
     labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.django.rule=Host(`sub.domain.com`)"
+        - "traefik.http.routers.django.rule=Host(`sub.foxtrot.com`)"
         - "traefik.http.routers.django.tls=true"
         - "traefik.http.routers.django.tls.certresolver=letsencrypt"
   db:
@@ -25,7 +25,7 @@ services:
     expose:
         - 5432
     env_file: 
-        - app/.envs/.local/.database
+        - app/.envs/.prod/.database
   traefik:  # new
     build:
         context: .
@@ -38,7 +38,7 @@ services:
         - "./traefik-public-certificates:/certificates"
     labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.domain.com`)"
+        - "traefik.http.routers.dashboard.rule=Host(`dashboard.foxtrot.com`)"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
         - "traefik.http.routers.dashboard.service=api@internal"
